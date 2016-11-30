@@ -2,12 +2,17 @@ from graph import graph
 
 """
 Basic DFA implementation:
+
 1. Can build a basic DFA from strings 
-2. Allows OR & AND using subset construction
-3. Can plot current DFA
-4. Can do state optimization
-5. Can generate regex from DFA
+2. Allows building DFA manually 
+3. Allows OR & AND using subset construction
+4. Can plot current DFA
+5. Can do state optimization
+6. Can generate regex from DFA
+7. Allows toString of DFA for human readable form of DFA
+8. Allows small DFA stats summary
 """
+
 class DFA:
 
 	"""
@@ -226,8 +231,69 @@ class DFA:
 	Generate equivalent DFA by merging equivalent states
 	"""
 	def mergeEquivalent(self):
-		# For now
-		return self
+		# Mark all pairs as equivalent initially
+		notEquivalent = [[0 for j in range(self.numStates)] for i in range(self.numStates)]
+
+		# Mark all pairs of q1, q2 as not equivalent where
+		# q1 not in F and q2 in F and vice-versa
+		for q1 in range(self.numStates):
+			if q1 in self.F:
+				continue
+
+			for q2 in self.F:
+				notEquivalent[q1][q2] = 1
+				notEquivalent[q2][q1] = 1
+
+		# Repeat till convergence:
+		flag = True
+		while flag:
+			flag = False
+			# Iterate over all unique (q1,q2) pairs
+			for q1 in range(self.numStates):
+				for q2 in range(q1+1, self.numStates):
+					# If already non-equivalent, no need to process
+					if notEquivalent[q1][q2]:
+						continue
+
+					# If possibly equivalent, try to find distinguishing letter
+					for c in self.sigma:
+						if notEquivalent[self.delta[(q1, c)]][self.delta[(q2, c)]]:
+							notEquivalent[q1][q2] = 1
+							notEquivalent[q2][q1] = 1
+							flag = True
+							break
+
+		# Genereate translation
+		curr = 0
+		translation = {}
+		for q in range(self.numStates):
+			if q in translation:
+				continue
+
+			translation[q] = curr
+			for q2 in range(q+1, self.numStates):
+				if not notEquivalent[q][q2]:
+					translation[q2] = curr
+
+			curr += 1
+
+		# Build new DFA based on computed translation
+		reduced = DFA(self.sigma, clean=True)
+		
+		# Initialize state set and start set
+		reduced.numStates = curr
+		reduced.s 		  = translation[self.s]
+
+		# Initialize final states
+		for f in self.F:
+			reduced.F[translation[f]] = 'final'
+		
+		# Initialize transition matrix
+		for q in range(self.numStates):
+			for c in self.sigma:
+				reduced.delta[(translation[q], c)] = translation[self.delta[(q,c)]]
+
+		return reduced
 
 
 	"""
@@ -237,6 +303,13 @@ class DFA:
 		resultant = self.rmUnreachable()
 		resultant = resultant.mergeEquivalent()
 		return resultant
+
+
+	"""
+	Returns regex equivalent of the DFA
+	"""
+	def getRegex(self):
+		return "."
 
 
 	"""

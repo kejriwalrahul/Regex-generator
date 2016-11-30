@@ -1,2 +1,2 @@
 # Regex-generator
-Generates optimal regexes from sets of strings
+Tries to generate elegant "optimal" regexes from sets of strings

@@ -24,6 +24,8 @@ resDFA = resDFA.optimize()
 resDFA.plot()
 resDFA.stats()
 
+print "Equivalent Regex: ", resDFA.getRegex()
+
 # Validation Test
 print "\n\nValidation: "
 print len(stringSet)
