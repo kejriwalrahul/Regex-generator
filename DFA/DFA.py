@@ -13,20 +13,30 @@ class DFA:
 	"""
 	Initialize a basic DFA that never accepts
 	"""
-	def __init__(self, sigma, string= ""):
+	def __init__(self, sigma, string= "", clean=False):
 		
-		# Build trivial one-state DFA 
-		self.numStates = 1
-		self.sigma = sigma
-		self.s = 0
-		self.F = {}
-		
-		self.delta = {}
-		for c in sigma:
-			self.delta[(0,c)] = 0
+		# If clean, leave uninitialized
+		if clean:
+			self.numStates = 0
+			self.sigma = sigma
+			self.s = 0
+			self.F = {}
+			self.delta = {}
+		else:
+			# Build trivial one-state DFA 
+			self.numStates = 1
+			self.sigma = sigma
+			self.s = 0
+			self.F = {}
+			
+			# Build error state transitions
+			self.delta = {}
+			for c in sigma:
+				self.delta[(0,c)] = 0
 
-		if string != "":
-			self.buildFromString(string)
+			# Build from string if reqd
+			if string != "":
+				self.buildFromString(string)
 
 
 	"""
@@ -68,7 +78,7 @@ class DFA:
 		self.F[currState] = 'final'
 		for alpha in self.sigma:
 			self.delta[(currState, alpha)] = 0
-			
+
 
 	"""
 	Using a wrapper on top of graphviz package to plot the DFA 
@@ -112,9 +122,8 @@ class DFA:
 				translation[(q1, q2)] = curr
 				curr += 1
 
-		# Build new DFA and clear transitions
-		res = DFA(self.sigma)
-		res.delta.clear()
+		# Build new DFA and clean transitions
+		res = DFA(self.sigma, clean=True)
 
 		# Update State set and start state
 		res.numStates = self.numStates * other.numStates
@@ -163,11 +172,79 @@ class DFA:
 
 
 	"""
+	Generate equivalent DFA by removing unreachable states
+	"""
+	def rmUnreachable(self):
+
+		# Initialize reachable state set
+		reachable = set([]);
+		new_reachable = set([self.s]);
+		
+		# Compute reachable states
+		while len(new_reachable):
+			reachable = reachable.union(new_reachable)
+			iterate_over = new_reachable
+			new_reachable = set([])
+
+			for q in iterate_over:
+				for c in self.sigma:
+					newS = self.delta[(q,c)] 
+					if newS not in reachable:
+						new_reachable.add(newS)
+
+		# Build translation matrix
+		translation = {}
+		curr = 0
+		for q in reachable:
+			translation[q] = curr
+			curr += 1
+
+		# Build new DFA based on computed translation
+		reduced = DFA(self.sigma, clean=True)
+		
+		# Initialize state set and start set
+		reduced.numStates = len(translation)
+		reduced.s 		  = translation[self.s]
+
+		# Initialize final states
+		for f in self.F:
+			if f in translation:
+				reduced.F[translation[f]] = 'final'
+		
+		# Initialize transition matrix
+		for q in range(self.numStates):
+			if q not in translation:
+				continue
+
+			for c in self.sigma:
+				reduced.delta[(translation[q], c)] = translation[self.delta[(q,c)]]
+
+		return reduced
+
+
+	"""
+	Generate equivalent DFA by merging equivalent states
+	"""
+	def mergeEquivalent(self):
+		# For now
+		return self
+
+
+	"""
+	Performs state minimization and returns minimized DFA 
+	"""
+	def optimize(self):
+		resultant = self.rmUnreachable()
+		resultant = resultant.mergeEquivalent()
+		return resultant
+
+
+	"""
 	Returns some statistics regarding the DFA
 	"""
 	def stats(self):
-		print "DFA Statistics: "
-		print "\nNo. of States = " , self.numStates
+		print "\nDFA Statistics: "
+		print "No. of States = " , self.numStates
 		print "No. of Final States = ", len(self.F)
 
 

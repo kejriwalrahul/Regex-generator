@@ -1,8 +1,10 @@
 from DFA.DFA import DFA
 
+# Currently used alphabet for DFAs
 alpha = ["a", "b"]
-stringSet = []
 
+# Obtain input strings
+stringSet = []
 while True:
 	try:
 		s = raw_input()
@@ -15,11 +17,15 @@ resDFA = DFA(alpha)
 for s in stringSet:
 	resDFA += DFA(alpha, s)
 
-# resDFA = resDFA.optimize()
+# Optimize using state minimization
+resDFA = resDFA.optimize()
+
+# Plot resultant DFA and show stats
 resDFA.plot()
 resDFA.stats()
 
 # Validation Test
+print "\n\nValidation: "
 print len(stringSet)
 for s in stringSet:
 	print resDFA.accepts(s)
