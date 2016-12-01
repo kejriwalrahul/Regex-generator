@@ -1,4 +1,5 @@
 from graph import graph
+from random import shuffle
 
 """
 Basic DFA implementation:
@@ -331,7 +332,9 @@ class DFA:
 		# Build solver order
 
 		# Solve iteratively
-		for n in range(self.numStates-1, -1, -1):
+		x = range(self.numStates-1, -1, -1)
+		shuffle(x)
+		for n in x:
 			"""
 			For debugging: 
 			print "\n\nState:", n
