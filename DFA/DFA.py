@@ -93,9 +93,9 @@ class DFA:
 
 		for i in range(self.numStates):
 			if i == self.s:
-				currPlot.addNode(i, "start")
+				currPlot.addNode(i, "start(" + str(i) +")")
 			elif i in self.F:
-				currPlot.addNode(i, "final")
+				currPlot.addNode(i, "final(" + str(i) +")")
 			else:
 				currPlot.addNode(i)
 
@@ -308,8 +308,45 @@ class DFA:
 	"""
 	Returns regex equivalent of the DFA
 	"""
-	def getRegex(self):
-		return "."
+	def toRE(self):
+
+		# B array initialize
+		B = []
+		for i in range(self.numStates):
+			if i in self.F:
+				B.append(regex.epsilon())
+			else:
+				B.append(regex.empty())
+
+		# A array initialization
+		A = [["" for j in range(self.numStates)] for i in range(self.numStates)]
+		for i in range(self.numStates):
+			for j in range(self.numStates):
+				cset = []
+				for c in self.sigma:
+					if self.delta[(i,c)] == j:
+						cset.append(c)
+				A[i][j] = regex.options(cset)
+
+		# Build solver order
+
+		# Solve iteratively
+		for n in range(self.numStates-1, -1, -1):
+			"""
+			For debugging: 
+			print "\n\nState:", n
+			print "A: \n", A
+			print "B: \n", B
+			"""
+			B[n] = regex.concat(regex.star(A[n][n]), B[n])
+			for j in range(self.numStates):
+				A[n][j] = regex.concat(regex.star(A[n][n]), A[n][j])
+			for i in range(self.numStates):
+				B[i] = regex.alt(B[i], regex.concat(A[i][n],  B[n])) 
+				for j in range(self.numStates):
+					A[i][j] = regex.alt(A[i][j], regex.concat(A[i][n], A[n][j])) 
+
+		return B[self.s]
 
 
 	"""
@@ -375,3 +412,58 @@ class DFA:
 	"""
 	def setStart(self, s):
 		self.s = s
+
+
+"""
+Class for RE building 
+Contains a few generic RE building methods
+"""
+class regex:
+
+	@staticmethod
+	def epsilon():
+		return ""
+
+	@staticmethod
+	def empty():
+		return None
+
+	@staticmethod
+	def options(cset):
+		if not len(cset):
+			return regex.empty()
+
+		if len(cset) == 1:
+			return cset[0]
+
+		return "[" + "".join(cset) + "]"
+
+	@staticmethod
+	def alt(l,r):
+		# Handle epsilon
+		if l == None:
+			return r
+		if r == None:
+			return l
+
+		if l == "":
+			return "(" + r + ")?"
+		if r == "":
+			return "(" + l + ")?"
+
+		return  "(" + l + "|" + r + ")"
+
+	@staticmethod
+	def star(l):
+		if l == "" or l == None:
+			return ""
+
+		return "(" + l + ")*"
+
+	@staticmethod
+	def concat(l,r):
+		# Handle epsilon
+		if l == None or r == None:
+			return None
+
+		return  l + r

@@ -1,4 +1,5 @@
 from DFA.DFA import DFA
+import exrex
 
 # Currently used alphabet for DFAs
 alpha = ["a", "b"]
@@ -22,12 +23,14 @@ resDFA = resDFA.optimize()
 
 # Plot resultant DFA and show stats
 resDFA.plot()
-resDFA.stats()
+# resDFA.stats()
 
-print "Equivalent Regex: ", resDFA.getRegex()
+s = resDFA.toRE()
+print "Equivalent Regex: ", s
+print "Further simplified: ", exrex.simplify(s)
 
 # Validation Test
-print "\n\nValidation: "
-print len(stringSet)
-for s in stringSet:
-	print resDFA.accepts(s)
+# print "\n\nValidation: "
+# print len(stringSet)
+# for s in stringSet:
+# 	print resDFA.accepts(s)
