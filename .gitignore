@@ -2,7 +2,6 @@ DFA/test.py
 DFA/*.pyc
 DFA/*.svg
 DFA/graph-state
-ip
 *.pyc
 *.svg
 graph-state
